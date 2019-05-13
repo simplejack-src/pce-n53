@@ -22,7 +22,7 @@ install the kernel module respectively:
 # make clean
 # make
 # make install
-'''
+```
 
 Note: Installing the kernel module may require root privileges
 

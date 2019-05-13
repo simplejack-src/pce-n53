@@ -16,7 +16,6 @@ The following environment variables must be set prior to building:
 * KERN_VER[=[target kernel version]]
 * LINUX_SRC[=[target kernel source directory, i.e. kernel headers]]
 
-
 As a Makefile project, the following commands can be used to clean, build and
 install the kernel module respectively:
 ```

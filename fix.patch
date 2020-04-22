@@ -1,7 +1,7 @@
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/Makefile Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/Makefile
-index 533ea7c..61fed99 100644
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/Makefile Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/Makefile
+index 533ea7c..2eceac7 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/Makefile
-+++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/Makefile
++++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/Makefile
 @@ -189,11 +189,14 @@ CROSS_COMPILE = mips-wrs-linux-gnu-
  endif
  
@@ -19,6 +19,15 @@ index 533ea7c..61fed99 100644
  CROSS_COMPILE = 
  endif
  
+@@ -385,7 +388,7 @@ else
+ ifeq ($(PLATFORM),FREESCALE8377)
+ 	$(MAKE) ARCH=powerpc CROSS_COMPILE=$(CROSS_COMPILE) -C  $(LINUX_SRC) SUBDIRS=$(RT28xx_DIR)/os/linux modules
+ else
+-	$(MAKE) -C $(LINUX_SRC) SUBDIRS=$(RT28xx_DIR)/os/linux modules
++	$(MAKE) -C $(LINUX_SRC) M=$(RT28xx_DIR)/os/linux modules
+ endif
+ endif
+ 
 @@ -410,7 +413,6 @@ ifeq ($(OSABL),YES)
  	cp -f $(RT28xx_DIR)/os/linux/rtnet$(MODULE)apsta.ko /tftpboot
  endif
@@ -27,10 +36,10 @@ index 533ea7c..61fed99 100644
  ifeq ($(OSABL),YES)
  	cp -f $(RT28xx_DIR)/os/linux/rtutil$(MODULE)sta.ko /tftpboot
  	cp -f $(RT28xx_DIR)/os/linux/rtnet$(MODULE)sta.ko /tftpboot
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init.c Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init.c
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init.c Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init.c
 index a8a04dd..c2c455d 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init.c
-+++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init.c
++++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init.c
 @@ -2851,8 +2851,8 @@ VOID	UserCfgInit(
  	pAd->bGenOneHCCA = FALSE;
  	pAd->CommonCfg.Dsifs = 10;      /* in units of usec */
@@ -51,10 +60,10 @@ index a8a04dd..c2c455d 100644
  	OPSTATUS_CLEAR_FLAG(pAd, fOP_STATUS_SHORT_PREAMBLE_INUSED);  /* CCK use LONG preamble*/
  
  #ifdef CONFIG_STA_SUPPORT
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init_inf.c Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init_inf.c
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init_inf.c Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init_inf.c
 index 3f97589..ed501e4 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init_inf.c
-+++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init_inf.c
++++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init_inf.c
 @@ -330,7 +330,6 @@ int rt28xx_init(
  	/* Read parameters from Config File */
  	/* unknown, it will be updated in NICReadEEPROMParameters */
@@ -63,10 +72,10 @@ index 3f97589..ed501e4 100644
  
  #ifdef CONFIG_STA_SUPPORT
  #ifdef CREDENTIAL_STORE
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_mcu.c Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_mcu.c
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_mcu.c Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_mcu.c
 index 3c1410a..535db52 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_mcu.c
-+++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_mcu.c
++++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_mcu.c
 @@ -441,7 +441,7 @@ INT RtmpAsicSendCommandToMcu(
  
  #ifdef CONFIG_STA_SUPPORT
@@ -76,10 +85,10 @@ index 3c1410a..535db52 100644
  	ULONG	offset;
  #endif /* PCIE_PS_SUPPORT */
  #endif /* CONFIG_STA_SUPPORT */
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/os/rt_linux.h Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/os/rt_linux.h
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/os/rt_linux.h Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/os/rt_linux.h
 index 8fe2b16..8662989 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/os/rt_linux.h
-+++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/os/rt_linux.h
++++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/os/rt_linux.h
 @@ -278,8 +278,13 @@ typedef struct file* RTMP_OS_FD;
  
  typedef struct _OS_FS_INFO_
@@ -122,10 +131,10 @@ index 8fe2b16..8662989 100644
  
  #define GET_OS_PKT_NETDEV(_pkt) \
  		(RTPKT_TO_OSPKT(_pkt)->dev)
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/rtmp_timer.h Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/rtmp_timer.h
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/rtmp_timer.h Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/rtmp_timer.h
 index ba41f33..533f36c 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/rtmp_timer.h
-+++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/rtmp_timer.h
++++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/rtmp_timer.h
 @@ -31,7 +31,7 @@
  #include "rtmp_os.h"
  
@@ -173,10 +182,10 @@ index ba41f33..533f36c 100644
  	_func(NULL, (PVOID) pTimer->cookie, NULL, pTimer); 							\
  	if (pTimer->Repeat)														\
  		RTMP_OS_Add_Timer(&pTimer->TimerObj, pTimer->TimerValue);			\
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4 Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4 Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4
 index 2db303c..8ba230d 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4
-+++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4
++++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4
 @@ -9,6 +9,9 @@ DAT_FILE_NAME = RT$(MODULE_DAT)STA.dat
  endif
  #endif // CONFIG_STA_SUPPORT //
@@ -208,10 +217,10 @@ index 2db303c..8ba230d 100644
  
  # Declare the contents of the .PHONY variable as phony.  We keep that
  # information in a variable so we can use it in if_changed and friends.
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.netif Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.netif
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.netif Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.netif
 index c8cc93c..c35e5cc 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.netif
-+++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.netif
++++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.netif
 @@ -8,6 +8,10 @@ endif
  #endif // CONFIG_STA_SUPPORT //
  
@@ -237,10 +246,10 @@ index c8cc93c..c35e5cc 100644
  
  # Declare the contents of the .PHONY variable as phony.  We keep that
  # # information in a variable so we can use it in if_changed and friends.
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.util Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.util
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.util Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.util
 index 69e401c..77904e0 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.util
-+++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.util
++++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.util
 @@ -7,6 +7,9 @@ MOD_NAME = rtutil$(MODULE)sta
  endif
  #endif // CONFIG_STA_SUPPORT //
@@ -265,10 +274,10 @@ index 69e401c..77904e0 100644
  
  # Declare the contents of the .PHONY variable as phony.  We keep that
  # # information in a variable so we can use it in if_changed and friends.
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6 Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6 Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6
 index 28c5530..1f1bf71 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6
-+++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6
++++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6
 @@ -9,6 +9,9 @@ DAT_FILE_NAME = RT$(CHIPSET_DAT)STA.dat
  endif
  #endif // CONFIG_STA_SUPPORT //
@@ -300,10 +309,10 @@ index 28c5530..1f1bf71 100644
  
  # Declare the contents of the .PHONY variable as phony.  We keep that
  # information in a variable so we can use it in if_changed and friends.
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.netif Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.netif
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.netif Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.netif
 index 968165d..1a92a39 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.netif
-+++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.netif
++++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.netif
 @@ -7,6 +7,9 @@ MOD_NAME = rtnet$(MODULE)sta
  endif
  #endif // CONFIG_STA_SUPPORT //
@@ -325,10 +334,10 @@ index 968165d..1a92a39 100644
  	rm -rf $(addprefix $(LINUX_SRC_MODULE),$(addsuffix .ko,$(MOD_NAME)))
 -	/sbin/depmod -a ${shell uname -r}
 +	/sbin/depmod -a ${KERN_VER}
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.util Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.util
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.util Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.util
 index 7510db6..e43fe5f 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.util
-+++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.util
++++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.util
 @@ -7,6 +7,9 @@ MOD_NAME = rtutil$(MODULE)sta
  endif
  #endif // CONFIG_STA_SUPPORT //
@@ -351,10 +360,10 @@ index 7510db6..e43fe5f 100644
 -	/sbin/depmod -a ${shell uname -r}
 \ No newline at end of file
 +	/sbin/depmod -a ${KERN_VER}
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/pci_main_dev.c Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/pci_main_dev.c
-index ebd3e57..0674e6a 100644
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/pci_main_dev.c Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/pci_main_dev.c
+index ebd3e57..e6cfac2 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/pci_main_dev.c
-+++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/pci_main_dev.c
++++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/pci_main_dev.c
 @@ -32,6 +32,7 @@
  #include "rt_os_util.h"
  #include "rt_os_net.h"
@@ -402,9 +411,8 @@ index ebd3e57..0674e6a 100644
      name:       RTMP_DRV_NAME,
      id_table:   rt2860_pci_tbl,
      probe:      rt2860_probe,
--#if LINUX_VERSION_CODE >= 0x20412
 +#if LINUX_VERSION_CODE < KERNEL_VERSION(3,8,0) /* 3.8 check */
-+#if LINUX_VERSION_CODE >= 0x20412 
+ #if LINUX_VERSION_CODE >= 0x20412
      remove:     __devexit_p(rt2860_remove_one),
  #else
      remove:     __devexit(rt2860_remove_one),
@@ -438,10 +446,10 @@ index ebd3e57..0674e6a 100644
      IN  struct pci_dev  *pci_dev)
  {
  	PNET_DEV	net_dev = pci_get_drvdata(pci_dev);
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_linux.c Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_linux.c
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_linux.c Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_linux.c
 index e7c8084..dc0037d 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_linux.c
-+++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_linux.c
++++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_linux.c
 @@ -119,9 +119,11 @@ static inline VOID __RTMP_OS_Init_Timer(
  	IN PVOID data)
  {
@@ -529,10 +537,23 @@ index e7c8084..dc0037d 100644
  }
  
  /*
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/sta_ioctl.c Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/sta_ioctl.c
-index df434f9..9568947 100644
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_main_dev.c Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_main_dev.c
+index f1ebc38..5524ef2 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_main_dev.c
++++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_main_dev.c
+@@ -486,7 +486,7 @@ VOID *RtmpNetEthConvertDevSearch(
+ 	struct net *net;
+ 	net = dev_net(net_dev);
+ 	
+-	BUG_ON(!net);
++//	BUG_ON(!net);
+ 	for_each_netdev(net, pNetDev)
+ #else
+ 	struct net *net;
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/sta_ioctl.c Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/sta_ioctl.c
+index df434f9..2a151ed 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/sta_ioctl.c
-+++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/sta_ioctl.c
++++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/sta_ioctl.c
 @@ -268,8 +268,9 @@ int rt_ioctl_giwmode(struct net_device *dev,
  /*    if(!RTMP_TEST_FLAG(pAd, fRTMP_ADAPTER_INTERRUPT_IN_USE)) */
  	if (RTMP_DRIVER_IOCTL_SANITY_CHECK(pAd, NULL) != NDIS_STATUS_SUCCESS)
@@ -564,10 +585,28 @@ index df434f9..9568947 100644
          }
      }
  
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/sta/sta_cfg.c Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/sta/sta_cfg.c
+@@ -2581,7 +2581,7 @@ INT rt28xx_sta_ioctl(
+ 		case SIOCGIWPRIV:
+ 			if (wrqin->u.data.pointer) 
+ 			{
+-				if ( access_ok(VERIFY_WRITE, wrqin->u.data.pointer, sizeof(privtab)) != TRUE)
++				if ( access_ok(wrqin->u.data.pointer, sizeof(privtab)) != TRUE)
+ 					break;
+ 				if ((sizeof(privtab) / sizeof(privtab[0])) <= wrq->u.data.length)
+ 				{
+@@ -2594,7 +2594,7 @@ INT rt28xx_sta_ioctl(
+ 			}
+ 			break;
+ 		case RTPRIV_IOCTL_SET:
+-			if(access_ok(VERIFY_READ, wrqin->u.data.pointer, wrqin->u.data.length) != TRUE)   
++			if(access_ok(wrqin->u.data.pointer, wrqin->u.data.length) != TRUE)   
+ 					break;
+ 			return rt_ioctl_setparam(net_dev, NULL, NULL, wrqin->u.data.pointer);
+ 			break;
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/sta/sta_cfg.c Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/sta/sta_cfg.c
 index 6e66010..67bd0ba 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/sta/sta_cfg.c
-+++ Linux_4.19.2-arch1-1-ARCH/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/sta/sta_cfg.c
++++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/sta/sta_cfg.c
 @@ -4893,7 +4893,7 @@ VOID RTMPIoctlShow(
              wrq->u.data.length = strlen(extra) + 1; /* 1: size of '\0' */
              break;

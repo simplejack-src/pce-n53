@@ -1,7 +1,7 @@
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/Makefile Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/Makefile
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/Makefile Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/Makefile
 index 533ea7c..2eceac7 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/Makefile
-+++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/Makefile
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/Makefile
 @@ -189,11 +189,14 @@ CROSS_COMPILE = mips-wrs-linux-gnu-
  endif
  
@@ -36,10 +36,593 @@ index 533ea7c..2eceac7 100644
  ifeq ($(OSABL),YES)
  	cp -f $(RT28xx_DIR)/os/linux/rtutil$(MODULE)sta.ko /tftpboot
  	cp -f $(RT28xx_DIR)/os/linux/rtnet$(MODULE)sta.ko /tftpboot
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init.c Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init.c
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/chips/rt30xx.c Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/chips/rt30xx.c
+index c80795a..80a4b4e 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/chips/rt30xx.c
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/chips/rt30xx.c
+@@ -474,7 +474,6 @@ VOID RT30xxLoadRFSleepModeSetup(
+ 	IN PRTMP_ADAPTER 	pAd)
+ {
+ 	UCHAR RFValue;
+-	UINT32 MACValue;
+ 
+ 	{
+ 			/* RF_BLOCK_en. RF R1 register Bit 0 to 0*/
+@@ -512,7 +511,6 @@ VOID RT30xxReverseRFSleepModeSetup(
+ 	IN BOOLEAN			FlgIsInitState)
+ {
+ 	UCHAR RFValue;
+-	UINT32 MACValue;
+ 
+ 	if(!IS_RT3572(pAd))
+ 	{
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/chips/rt5592.c Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/chips/rt5592.c
+index 8cc5b41..8b3192f 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/chips/rt5592.c
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/chips/rt5592.c
+@@ -117,7 +117,7 @@ const REG_PAIR RF5592Reg_5G_Default[] =
+ 	{RF_R62, 0x19},
+ };
+ 
+-REG_PAIR *RF5592Reg_5G = RF5592Reg_5G_Default;
++const REG_PAIR *RF5592Reg_5G = RF5592Reg_5G_Default;
+ UCHAR NUM_RF5592REG_5G = (sizeof(RF5592Reg_5G_Default) / sizeof(REG_PAIR));
+ 
+ /* RF for G band per channel */
+@@ -176,7 +176,7 @@ const REG_PAIR_CHANNEL RF5592Reg_Channel_5G_Default[] =
+ 	{RF_R59, 100, 114, 0x7C},
+ 	{RF_R59, 116, 138, 0x7E},
+ };
+-REG_PAIR_CHANNEL *RF5592Reg_Channel_5G = RF5592Reg_Channel_5G_Default;
++const REG_PAIR_CHANNEL *RF5592Reg_Channel_5G = RF5592Reg_Channel_5G_Default;
+ UCHAR NUM_RF5592REG_CHANNEL_5G = (sizeof(RF5592Reg_Channel_5G_Default) / sizeof(REG_PAIR_CHANNEL));
+ 
+ #ifdef RT5592EP_SUPPORT
+@@ -854,276 +854,6 @@ VOID RT5592LoadRFNormalModeSetup(
+ 	RT30xxWriteRFRegister(pAd, RF_R30, RFValue);
+ }
+ 
+-static VOID RT5592FilterCalibration(IN PRTMP_ADAPTER pAd)
+-{
+-
+-	UCHAR FilterTarget = 0x13;
+-	UCHAR RFValue, BBPValue;
+-	UCHAR CalRF57_PassBand = 0x00;
+-	UCHAR CalRF57_StopBand = 0x00;
+-	UINT loop = 0, count = 0, loopcnt = 0, ReTry = 0;
+-	UCHAR tx_agc_fc = 0x00;
+-
+-	pAd->Mlme.CaliBW20RfR24 = 0x10;
+-	pAd->Mlme.CaliBW40RfR24 = 0x10;
+-
+-	/* Enable abb_test */
+-	RT30xxReadRFRegister(pAd, RF_R30, &RFValue);
+-	RFValue &= ~0xC0;
+-	RFValue |= 0x40;
+-	RT30xxWriteRFRegister(pAd, RF_R30, RFValue);
+-
+-	do
+-	{
+-		if (loop == 1)
+-		{
+-			/*
+- 			 * tx_h20M = 20MHz
+- 			 */
+-			RT30xxReadRFRegister(pAd, RF_R30, &RFValue);
+-			RFValue |= 0x02;
+-			RT30xxWriteRFRegister(pAd, RF_R30, RFValue);
+-
+-			tx_agc_fc = 7;
+-			RT30xxReadRFRegister(pAd, RF_R32, &RFValue);
+-			RFValue &= ~0XF8;
+-			RFValue |= (tx_agc_fc << 3);
+-			RT30xxWriteRFRegister(pAd, RF_R32, RFValue);
+-
+-			FilterTarget = 0x13;
+-
+-			/* When calibrate BW40, BBP mask must set to BW40 */
+-			RTMP_BBP_IO_READ8_BY_REG_ID(pAd, BBP_R4, &BBPValue);
+-			BBPValue &= ~0x18;
+-			BBPValue |= 0x10;
+-			RTMP_BBP_IO_WRITE8_BY_REG_ID(pAd, BBP_R4, BBPValue);
+-			
+-			/*
+- 			 * rx_h20M = 20MHz
+- 			 */
+-			RT30xxReadRFRegister(pAd, RF_R30, &RFValue);
+-			RFValue |= 0x04;
+-			RT30xxWriteRFRegister(pAd, RF_R30, RFValue);
+-		}
+-		else
+-		{
+-			/*
+- 			 * tx_h20M = 10MHz
+- 			 */
+-			RT30xxReadRFRegister(pAd, RF_R30, &RFValue);
+-			RFValue &= ~0x02;
+-			RT30xxWriteRFRegister(pAd, RF_R30, RFValue);
+-
+-			tx_agc_fc = 0x07;
+-			RT30xxReadRFRegister(pAd, RF_R32, &RFValue);
+-			RFValue &= ~0xF8;
+-			RFValue |= (tx_agc_fc << 3);
+-			RT30xxWriteRFRegister(pAd, RF_R32, RFValue);
+-
+-			/*
+-				The main change is to set 20M BW target value to 0x12.
+-				That can provide more margin for 20M BW flatness.
+-			*/
+-			FilterTarget = 0x12;
+-
+-			/*
+- 			 * rx_h20M = 20MHz
+- 			 */
+-			RT30xxReadRFRegister(pAd, RF_R30, &RFValue);
+-			RFValue &= ~0x04;
+-			RT30xxWriteRFRegister(pAd, RF_R30, RFValue);
+-		}
+-
+-		/*
+- 		 * Enable BB loopback
+- 		 */
+-		RT30xxReadRFRegister(pAd, RF_R36, &RFValue);
+-		RFValue |= 0x02;
+-		RT30xxWriteRFRegister(pAd, RF_R36, RFValue);
+-
+-		/*
+- 		 * transmit tone frequency control of passband test tone
+- 		 */
+-		BBPValue = 0x02;
+-		RTMP_BBP_IO_WRITE8_BY_REG_ID(pAd, BBP_R158, BBPValue);
+-		BBPValue = 0x00;
+-		RTMP_BBP_IO_WRITE8_BY_REG_ID(pAd, BBP_R159, BBPValue);
+-
+-		/*
+- 		 * Enable RF calibration
+- 		 */
+-		BBPValue = 0x00;
+-		RTMP_BBP_IO_WRITE8_BY_REG_ID(pAd, BBP_R158, BBPValue);
+-		BBPValue = 0x82;
+-		RTMP_BBP_IO_WRITE8_BY_REG_ID(pAd, BBP_R159, BBPValue);
+-
+-		ReTry = 0;
+-	
+-		do
+-		{
+-			RTMPusecDelay(1000);
+-			RTMP_BBP_IO_READ8_BY_REG_ID(pAd, BBP_R159, &BBPValue);
+-			DBGPRINT(RT_DEBUG_TRACE, ("Wait RF calibration done BBP_R0 value = 0x%02x\n", BBPValue));
+-		} while((ReTry++ < 100 && (BBPValue & 0x80) == 0x80));
+-
+-		/*
+- 		 * Read Rx0 signal strnegth for RF loop back RX gain
+- 		 */
+-		BBPValue = 0x39;
+-		RTMP_BBP_IO_WRITE8_BY_REG_ID(pAd, BBP_R158, BBPValue);
+-		RTMP_BBP_IO_READ8_BY_REG_ID(pAd, BBP_R159, &BBPValue);
+-		CalRF57_PassBand = BBPValue & 0xFF;
+-
+-		DBGPRINT(RT_DEBUG_TRACE, ("Retry = %d, CalRF57_PassBand = 0x%02x\n", ReTry, CalRF57_PassBand));
+-		
+-		/*
+- 		 * transmit tone frequency control of stopband test tone
+- 		 */
+-		BBPValue = 0x02;
+-		RTMP_BBP_IO_WRITE8_BY_REG_ID(pAd, BBP_R158, BBPValue);
+-		BBPValue = 0x06;
+-		RTMP_BBP_IO_WRITE8_BY_REG_ID(pAd, BBP_R159, BBPValue);
+-
+-		while (TRUE)
+-		{
+-			
+-			/*
+- 			 * Enable RF calibration
+- 			 */
+-			BBPValue = 0x00;
+-			RTMP_BBP_IO_WRITE8_BY_REG_ID(pAd, BBP_R158, BBPValue);
+-			BBPValue = 0x82;
+-			RTMP_BBP_IO_WRITE8_BY_REG_ID(pAd, BBP_R159, BBPValue);
+-
+-			RTMPusecDelay(1000);
+-			
+-			/*
+- 		 	 * Read Rx0 signal strnegth for RF loop back RX gain
+- 		 	 */
+-			BBPValue = 0x39;
+-			RTMP_BBP_IO_WRITE8_BY_REG_ID(pAd, BBP_R158, BBPValue);
+-			RTMP_BBP_IO_READ8_BY_REG_ID(pAd, BBP_R159, &BBPValue);
+-			BBPValue &= 0xFF;
+-			CalRF57_StopBand = BBPValue;
+-
+-			DBGPRINT(RT_DEBUG_TRACE, ("loopcnt = %d, CalRF57_StopBand = 0x%x,\
+-					tx_agc_fc = 0x%0x, CalRF57_PassBand = 0x%0x,\
+-					FilterTarget = 0x%0x, (CalRF57_PassBand - CalRF57_StopBand) = 0x%0x\n",
+-					loopcnt, CalRF57_StopBand, tx_agc_fc, CalRF57_PassBand, FilterTarget,
+-					(CalRF57_PassBand - CalRF57_StopBand)));
+-
+-			if ((CalRF57_PassBand - CalRF57_StopBand) < FilterTarget)
+-				tx_agc_fc++;
+-			else if ((CalRF57_PassBand - CalRF57_StopBand) == FilterTarget)
+-			{
+-				tx_agc_fc++;
+-				count++;
+-			}
+-			else
+-			{
+-				loopcnt = 0;
+-				break;
+-			}
+-
+-			if (loopcnt++ > 100)
+-			{
+-				DBGPRINT(RT_DEBUG_TRACE, ("%s - can not find a valid value, loopcnt = %d\
+-						stop calibration\n", __FUNCTION__,loopcnt));
+-				break;
+-			}
+-
+-			if (loop == 0)
+-			{
+-				RT30xxReadRFRegister(pAd, RF_R30, &RFValue);
+-				RFValue &= ~0x02;
+-				RT30xxWriteRFRegister(pAd, RF_R30, RFValue);			
+-
+-			}
+-			else
+-			{
+-				RT30xxReadRFRegister(pAd, RF_R30, &RFValue);
+-				RFValue |= 0x02;
+-				RT30xxWriteRFRegister(pAd, RF_R30, RFValue);
+-			}
+-
+-			RT30xxReadRFRegister(pAd, RF_R32, &RFValue);
+-			RFValue &= ~0xF8;
+-			RFValue |= (tx_agc_fc << 3);
+-			RT30xxWriteRFRegister(pAd, RF_R32, RFValue);
+-		}
+-
+-		if (count > 0)
+-			tx_agc_fc = tx_agc_fc - ((count) ? 1 : 0);
+-
+-		/* Store for future usage */
+-		if (loopcnt < 100)
+-		{
+-			if (loop++ == 0)
+-				pAd->Mlme.CaliBW20RfR24 = tx_agc_fc;
+-			else
+-			{
+-				pAd->Mlme.CaliBW40RfR24 = tx_agc_fc;
+-				break;
+-			}	
+-
+-		}
+-		else
+-			break;
+-
+-		if (loop == 0)
+-		{
+-			RT30xxReadRFRegister(pAd, RF_R30, &RFValue);
+-			RFValue &= ~0x02;
+-			RT30xxWriteRFRegister(pAd, RF_R30, RFValue);
+-		}
+-		else
+-		{
+-			RT30xxReadRFRegister(pAd, RF_R30, &RFValue);
+-			RFValue |= 0x02;
+-			RT30xxWriteRFRegister(pAd, RF_R30, RFValue);
+-		}
+-
+-		RT30xxReadRFRegister(pAd, RF_R32, &RFValue);
+-		RFValue &= ~0xF8;
+-		RFValue |= (tx_agc_fc << 3);
+-		RT30xxWriteRFRegister(pAd, RF_R32, RFValue);
+-
+-		count = 0;
+-	} while (TRUE);
+-
+-	/*
+- 	 * Set back to initial state
+- 	 */
+-	BBPValue = 0x02;
+-	RTMP_BBP_IO_WRITE8_BY_REG_ID(pAd, BBP_R158, BBPValue);
+-	BBPValue = 0x00;
+-	RTMP_BBP_IO_WRITE8_BY_REG_ID(pAd, BBP_R159, BBPValue);
+-	
+-	/*
+- 	 * Disable BB loopback
+- 	 */
+-	RT30xxReadRFRegister(pAd, RF_R36, &RFValue);
+-	RFValue &= ~0x02;
+-	RT30xxWriteRFRegister(pAd, RF_R36, RFValue);
+-
+-	/*
+- 	 * Set BBP back to BW20
+-	 */
+-	RTMP_BBP_IO_READ8_BY_REG_ID(pAd, BBP_R4, &BBPValue);
+-	BBPValue &= ~0x18;
+-	RTMP_BBP_IO_WRITE8_BY_REG_ID(pAd, BBP_R4, BBPValue);
+-
+-	/*
+- 	 * Disable abb_test
+- 	 */
+-	RT30xxReadRFRegister(pAd, RF_R30, &RFValue);
+-	RFValue &= ~0xC0;
+-	RT30xxWriteRFRegister(pAd, RF_R30, RFValue);
+-
+-	DBGPRINT(RT_DEBUG_TRACE, ("%s CaliBW20RfR24 = 0x%x, CaliBW40RfR24 = 0x%x\n", 
+-					__FUNCTION__, pAd->Mlme.CaliBW20RfR24, pAd->Mlme.CaliBW40RfR24));
+-}
+-
+ 
+ static VOID NICInitRT5592RFRegisters(IN PRTMP_ADAPTER pAd)
+ {
+@@ -2220,7 +1950,7 @@ VOID RT5592_AsicBBPIQReCal(
+ static const RTMP_CHIP_CAP RT5592_ChipCap = {
+ 	.MaxNumOfRfId = 63,
+ 	.MaxNumOfBbpId = 248,
+-	.pRFRegTable = RF5592Reg_2G_5G,
++	.pRFRegTable = (REG_PAIR *)RF5592Reg_2G_5G,
+ 	.bbpRegTbSize = 0,
+ 	.TXWISize = 20,
+ 	.RXWISize = 24,
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/cmm_asic.c Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/cmm_asic.c
+index 0e0cd82..9d3782c 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/cmm_asic.c
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/cmm_asic.c
+@@ -1088,8 +1088,8 @@ VOID AsicGetAutoAgcOffsetForTemperatureSensor(
+ {
+ 	RTMP_CHIP_CAP *pChipCap = &pAd->chipCap;
+ 	const TX_POWER_TUNING_ENTRY_STRUCT *TxPowerTuningTable;
+-	TX_POWER_TUNING_ENTRY_STRUCT *TxPowerTuningTableEntry0 = NULL; /* Ant0 */
+-	TX_POWER_TUNING_ENTRY_STRUCT *TxPowerTuningTableEntry1 = NULL; /* Ant1 */
++	const TX_POWER_TUNING_ENTRY_STRUCT *TxPowerTuningTableEntry0 = NULL; /* Ant0 */
++	const TX_POWER_TUNING_ENTRY_STRUCT *TxPowerTuningTableEntry1 = NULL; /* Ant1 */
+ 	BBP_R49_STRUC	BbpR49;
+ 	BOOLEAN			bAutoTxAgc = FALSE;
+ 	PCHAR			pTxAgcCompensate = NULL;
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/cmm_data.c Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/cmm_data.c
+index 3d32f32..6acb43d 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/cmm_data.c
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/cmm_data.c
+@@ -84,7 +84,7 @@ NDIS_STATUS MiniportMMRequest(
+ 	NDIS_STATUS  	Status = NDIS_STATUS_SUCCESS;
+ 	ULONG	 		FreeNum;
+ 	UINT8 TXWISize = pAd->chipCap.TXWISize;
+-	UCHAR rtmpHwHdr[TXINFO_SIZE +  pAd->chipCap.TXWISize]; /*RTMP_HW_HDR_LEN];*/
++	UCHAR rtmpHwHdr[TXINFO_SIZE +  64]; /*RTMP_HW_HDR_LEN];*/
+ #ifdef RTMP_MAC_PCI
+ 	unsigned long	IrqFlags = 0;
+ //	UCHAR			IrqState;
+@@ -93,6 +93,7 @@ NDIS_STATUS MiniportMMRequest(
+ 	int 			retryCnt = 0;
+ 
+ 	ASSERT(Length <= MGMT_DMA_BUFFER_SIZE);
++	ASSERT(pAd->chipCap.TXWISize <= 64);
+ 	
+ 	if ((QueIdx & MGMT_USE_QUEUE_FLAG) == MGMT_USE_QUEUE_FLAG)
+ 	{
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/cmm_data_pci.c Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/cmm_data_pci.c
+index 70b81e7..ede5381 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/cmm_data_pci.c
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/cmm_data_pci.c
+@@ -537,8 +537,6 @@ BOOLEAN  RTMPFreeTXDUponTxDmaDone(
+ 	TXD_STRUC	TxD, *pOriTxD;
+ 	/*ULONG		IrqFlags;*/
+ 	BOOLEAN			bReschedule = FALSE;
+-	UINT8 TXWISize = pAd->chipCap.TXWISize;
+-
+ 
+ 	ASSERT(QueIdx < NUM_OF_TX_RING);
+ 	if (QueIdx >= NUM_OF_TX_RING)
+@@ -732,7 +730,6 @@ VOID	RTMPHandleMgmtRingDmaDoneInterrupt(
+ /*	int 		 i;*/
+ 	UCHAR	FREE = 0;
+ 	PRTMP_MGMT_RING pMgmtRing = &pAd->MgmtRing;
+-	UINT8 TXWISize = pAd->chipCap.TXWISize;
+ 
+ 	NdisAcquireSpinLock(&pAd->MgmtRingLock);
+ 
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/cmm_info.c Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/cmm_info.c
+index 9a01de7..2909f82 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/cmm_info.c
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/cmm_info.c
+@@ -2665,7 +2665,7 @@ PSTRING GetEncryptType(CHAR enc)
+     	return "TKIP";
+     if(enc == Ndis802_11Encryption3Enabled)
+     	return "AES";
+-	if(enc == Ndis802_11Encryption4Enabled)
++    if(enc == Ndis802_11Encryption4Enabled)
+     	return "TKIPAES";
+     else
+     	return "UNKNOW";
+@@ -2677,7 +2677,7 @@ PSTRING GetAuthMode(CHAR auth)
+     	return "OPEN";
+     if(auth == Ndis802_11AuthModeShared)
+     	return "SHARED";
+-	if(auth == Ndis802_11AuthModeAutoSwitch)
++    if(auth == Ndis802_11AuthModeAutoSwitch)
+     	return "AUTOWEP";
+     if(auth == Ndis802_11AuthModeWPA)
+     	return "WPA";
+@@ -2689,11 +2689,11 @@ PSTRING GetAuthMode(CHAR auth)
+     	return "WPA2";
+     if(auth == Ndis802_11AuthModeWPA2PSK)
+     	return "WPA2PSK";
+-	if(auth == Ndis802_11AuthModeWPA1WPA2)
++    if(auth == Ndis802_11AuthModeWPA1WPA2)
+     	return "WPA1WPA2";
+-	if(auth == Ndis802_11AuthModeWPA1PSKWPA2PSK)
++    if(auth == Ndis802_11AuthModeWPA1PSKWPA2PSK)
+     	return "WPA1PSKWPA2PSK";
+-	
++    else
+     	return "UNKNOW";
+ }		
+ 
+@@ -5075,7 +5075,7 @@ INT	Show_PMK_Proc(
+     for (idx = 0; idx < 32; idx++)
+         sprintf(pBuf+strlen(pBuf), "%02X", PMK[idx]);
+ 
+-	return 0;
++    return 0;
+ }
+ 
+ 
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/cmm_wpa.c Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/cmm_wpa.c
+index dbae779..dce1ad3 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/cmm_wpa.c
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/cmm_wpa.c
+@@ -1028,7 +1028,6 @@ VOID PeerPairMsg3Action(
+ 	UINT            	MsgLen;				
+ 	PUINT8				pCurrentAddr = NULL;
+ 	UCHAR				group_cipher = Ndis802_11WEPDisabled;
+-	BOOLEAN				Cancelled;
+ 	   
+ 	DBGPRINT(RT_DEBUG_TRACE, ("===> PeerPairMsg3Action \n"));
+ 	
+@@ -1247,8 +1246,8 @@ VOID WPAStart2WayGroupHS(
+     
+ 	DBGPRINT(RT_DEBUG_TRACE, ("===> WPAStart2WayGroupHS\n"));
+ 
+-    if ((!pEntry) || !IS_ENTRY_CLIENT(pEntry))
+-        return;
++	if ((!pEntry) || !IS_ENTRY_CLIENT(pEntry))
++		return;
+ 
+ 
+ 	/* Allocate memory for output*/
+@@ -1803,17 +1802,17 @@ int RtmpPasswordHash(PSTRING password, PUCHAR ssid, INT ssidlength, PUCHAR outpu
+ 	Return Value:
+ 
+ 	Note:
+-		Output ¡ö KDF-Length (K, label, Context) where
++		Output \A1\F6 KDF-Length (K, label, Context) where
+ 		Input:    K, a 256-bit key derivation key
+ 				  label, a string identifying the purpose of the keys derived using this KDF
+ 				  Context, a bit string that provides context to identify the derived key
+ 				  Length, the length of the derived key in bits
+ 		Output: a Length-bit derived key
+ 
+-		result ¡ö ""
+-		iterations ¡ö (Length+255)/256 
++		result \A1\F6 ""
++		iterations \A1\F6 (Length+255)/256 
+ 		do i = 1 to iterations
+-			result ¡ö result || HMAC-SHA256(K, i || label || Context || Length)
++			result \A1\F6 result || HMAC-SHA256(K, i || label || Context || Length)
+ 		od
+ 		return first Length bits of result, and securely delete all unused bits
+ 
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/crypt_aes.c Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/crypt_aes.c
+index f2b9e95..00cf85e 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/crypt_aes.c
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/crypt_aes.c
+@@ -1456,7 +1456,7 @@ INT AES_Key_Wrap (
+ /*    if ((pResult = (UINT8 *) kmalloc(sizeof(UINT8)*PlainTextLength, GFP_ATOMIC)) == NULL) {
+ */
+     if (pResult == NULL) {
+-    	DBGPRINT(RT_DEBUG_ERROR, ("AES_Key_Wrap: allocate %d bytes memory failure.\n", sizeof(UINT8)*PlainTextLength));
++    	DBGPRINT(RT_DEBUG_ERROR, ("AES_Key_Wrap: allocate %u bytes memory failure.\n", (unsigned int)(sizeof(UINT8)*PlainTextLength)));
+         return -2;
+     } /* End of if */
+ 
+@@ -1551,7 +1551,7 @@ INT AES_Key_Unwrap (
+ /*    if ((pResult = (UINT8 *) kmalloc(sizeof(UINT8)*PlainLength, GFP_ATOMIC)) == NULL) {
+ */
+     if (pResult == NULL) {
+-    	DBGPRINT(RT_DEBUG_ERROR, ("AES_Key_Unwrap: allocate %d bytes memory failure.\n", sizeof(UINT8)*PlainLength));
++    	DBGPRINT(RT_DEBUG_ERROR, ("AES_Key_Unwrap: allocate %u bytes memory failure.\n", (unsigned int)(sizeof(UINT8)*PlainLength)));
+         return -2;
+     } /* End of if */
+ 
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/ee_efuse.c Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/ee_efuse.c
+index b6f6e07..a27ef78 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/ee_efuse.c
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/ee_efuse.c
+@@ -476,7 +476,7 @@ static VOID eFusePhysicalWriteRegisters(
+ 	NdisMoveMemory(&data, &eFuseCtrlStruc, 4);	
+ 	RTMP_IO_WRITE32(pAd, efuse_ctrl_reg, data);	
+ 
+-	/*Step4. Polling EFSROM_KICK(0x580, bit30) until it become 0 again. It¡¦s done.*/
++	/*Step4. Polling EFSROM_KICK(0x580, bit30) until it become 0 again. It\A1\A6s done.*/
+ 	i = 0;
+ 
+ 	while(i < 500)
+@@ -1157,7 +1157,7 @@ static NTSTATUS eFuseWriteRegistersFromBin(
+ 		
+ 		RTMP_IO_WRITE32(pAd, EFUSE_CTRL, data);	
+ 
+-		/*Step1.1.4. Polling EFSROM_KICK(0x580, bit30) until it become 0 again. It¡¦s done.*/
++		/*Step1.1.4. Polling EFSROM_KICK(0x580, bit30) until it become 0 again. It\A1\A6s done.*/
+ 		i = 0;
+ 		while(i < 100)
+ 		{	
+@@ -1407,7 +1407,7 @@ int rtmp_ee_efuse_write16(
+         NdisMoveMemory(&(pAd->EEPROMImage[Offset]), &data, 2);
+     }
+     else
+-        eFuseWrite(pAd,Offset ,&data, 2);
++		eFuseWrite(pAd,Offset ,&data, 2);
+ 	return 0;
+ }
+ 
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/frq_cal.c Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/frq_cal.c
+index 60e3b5d..78758fd 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/frq_cal.c
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/frq_cal.c
+@@ -125,7 +125,7 @@ VOID FrequencyCalibrationMode(
+ 	{
+ 		RT30xxReadRFRegister(pAd, RF_R23, (PUCHAR)(&RFValue));
+ 		RFValue = ((RFValue & ~0x7F) | (pAd->FreqCalibrationCtrl.AdaptiveFreqOffset & 0x7F));
+-		RFValue = min(RFValue, 0x5F);
++		RFValue = ((RFValue < 0x5F) ? RFValue : 0x5F);
+ 		pAd->FreqCalibrationCtrl.AdaptiveFreqOffset = RFValue; /* Keep modified RF R23 value */
+ 		RT30xxWriteRFRegister(pAd, RF_R23, (UCHAR)RFValue);
+ 		RT30xxReadRFRegister(pAd, RF_R07, (PUCHAR)(&RFValue));
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/mlme.c Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/mlme.c
+index 471c396..6db78e5 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/mlme.c
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/mlme.c
+@@ -524,8 +524,8 @@ VOID MlmeResetRalinkCounters(
+ 
+ 		/* for performace enchanement */
+ 		NdisZeroMemory(&pAd->RalinkCounters,
+-						(UINT32)&pAd->RalinkCounters.OneSecEnd -
+-						(UINT32)&pAd->RalinkCounters.OneSecStart);
++						(UINT32)(&pAd->RalinkCounters.OneSecEnd -
++						&pAd->RalinkCounters.OneSecStart));
+ 
+ 	return;
+ }
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rt_led.c Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rt_led.c
+index eb31c98..fbe0896 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rt_led.c
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rt_led.c
+@@ -86,6 +86,7 @@ VOID RTMPSetLEDStatus(
+ 			break;
+ 		case LED_HALT: 
+ 			LedMode = 0; /* Driver sets MAC register and MAC controls LED */
++			/*fallthrough*/
+ 		case LED_RADIO_OFF:
+ 			LinkStatus = LINK_STATUS_RADIO_OFF;
+ 			MCUCmd = MCU_SET_LED_MODE;
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rt_rf.c Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rt_rf.c
+index 639544a..7133b1d 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rt_rf.c
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rt_rf.c
+@@ -100,7 +100,9 @@ NDIS_STATUS RT30xxWriteRFRegister(
+ 			if (beAdd)
+ 				IdRf++;
+ 			else
++			{
+ 				IdRf--;
++			}
+ 			
+ 				rfcsr.field.RF_CSR_DATA = IdRf;
+ 				RTMP_IO_WRITE32(pAd, RF_CSR_CFG, rfcsr.word);
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init.c Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init.c
 index a8a04dd..c2c455d 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init.c
-+++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init.c
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init.c
 @@ -2851,8 +2851,8 @@ VOID	UserCfgInit(
  	pAd->bGenOneHCCA = FALSE;
  	pAd->CommonCfg.Dsifs = 10;      /* in units of usec */
@@ -60,10 +643,10 @@ index a8a04dd..c2c455d 100644
  	OPSTATUS_CLEAR_FLAG(pAd, fOP_STATUS_SHORT_PREAMBLE_INUSED);  /* CCK use LONG preamble*/
  
  #ifdef CONFIG_STA_SUPPORT
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init_inf.c Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init_inf.c
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init_inf.c Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init_inf.c
 index 3f97589..ed501e4 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init_inf.c
-+++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init_inf.c
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_init_inf.c
 @@ -330,7 +330,6 @@ int rt28xx_init(
  	/* Read parameters from Config File */
  	/* unknown, it will be updated in NICReadEEPROMParameters */
@@ -72,10 +655,10 @@ index 3f97589..ed501e4 100644
  
  #ifdef CONFIG_STA_SUPPORT
  #ifdef CREDENTIAL_STORE
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_mcu.c Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_mcu.c
-index 3c1410a..535db52 100644
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_mcu.c Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_mcu.c
+index 3c1410a..5439500 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_mcu.c
-+++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_mcu.c
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/rtmp_mcu.c
 @@ -441,7 +441,7 @@ INT RtmpAsicSendCommandToMcu(
  
  #ifdef CONFIG_STA_SUPPORT
@@ -85,10 +668,41 @@ index 3c1410a..535db52 100644
  	ULONG	offset;
  #endif /* PCIE_PS_SUPPORT */
  #endif /* CONFIG_STA_SUPPORT */
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/os/rt_linux.h Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/os/rt_linux.h
+@@ -561,7 +561,7 @@ INT RtmpAsicSendCommandToMcu(
+ 			Configuration |= (0x13);	/* set Latency to default */
+ 			Configuration=le2cpu16(Configuration);
+ 			pci_write_config_word(((POS_COOKIE)pAd->OS_Cookie)->pci_dev, offset, Configuration);
+-			DBGPRINT(RT_DEBUG_TRACE, ("Write 70f; offset = %x, Configuration = %x. \n", offset, Configuration));
++			DBGPRINT(RT_DEBUG_TRACE, ("Write 70f; offset = %x, Configuration = %x. \n", (unsigned int)offset, Configuration));
+ 		}
+ 		pAd->LastMCUCmd = Command;
+         }
+@@ -584,7 +584,7 @@ INT RtmpAsicSendCommandToMcu(
+ 
+ 			pci_write_config_word(((POS_COOKIE)pAd->OS_Cookie)->pci_dev, offset, Configuration);
+ 
+-			DBGPRINT(RT_DEBUG_TRACE, ("RadioOnExec restore 70f; offset = %x, Configuration = %x. \n", offset, Configuration));
++			DBGPRINT(RT_DEBUG_TRACE, ("RadioOnExec restore 70f; offset = %x, Configuration = %x. \n", (unsigned int)offset, Configuration));
+ 		}
+ 	}
+ 
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/spectrum.c Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/spectrum.c
+index 250a8f4..a4e9145 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/spectrum.c
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/common/spectrum.c
+@@ -1969,7 +1969,7 @@ static VOID PeerMeasureReportAction(
+ /*	if ((pMeasureReportInfo = kmalloc(sizeof(MEASURE_RPI_REPORT), GFP_ATOMIC)) == NULL)*/
+ 	if (pMeasureReportInfo == NULL)
+ 	{
+-		DBGPRINT(RT_DEBUG_ERROR, ("%s unable to alloc memory for measure report buffer (size=%d).\n", __FUNCTION__, sizeof(MEASURE_RPI_REPORT)));
++		DBGPRINT(RT_DEBUG_ERROR, ("%s unable to alloc memory for measure report buffer (size=%u).\n", __FUNCTION__, (unsigned int)sizeof(MEASURE_RPI_REPORT)));
+ 		return;
+ 	}
+ 
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/os/rt_linux.h Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/os/rt_linux.h
 index 8fe2b16..8662989 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/os/rt_linux.h
-+++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/os/rt_linux.h
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/os/rt_linux.h
 @@ -278,8 +278,13 @@ typedef struct file* RTMP_OS_FD;
  
  typedef struct _OS_FS_INFO_
@@ -131,10 +745,10 @@ index 8fe2b16..8662989 100644
  
  #define GET_OS_PKT_NETDEV(_pkt) \
  		(RTPKT_TO_OSPKT(_pkt)->dev)
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/rtmp_timer.h Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/rtmp_timer.h
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/rtmp_timer.h Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/rtmp_timer.h
 index ba41f33..533f36c 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/rtmp_timer.h
-+++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/rtmp_timer.h
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/include/rtmp_timer.h
 @@ -31,7 +31,7 @@
  #include "rtmp_os.h"
  
@@ -182,10 +796,10 @@ index ba41f33..533f36c 100644
  	_func(NULL, (PVOID) pTimer->cookie, NULL, pTimer); 							\
  	if (pTimer->Repeat)														\
  		RTMP_OS_Add_Timer(&pTimer->TimerObj, pTimer->TimerValue);			\
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4 Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4 Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4
 index 2db303c..8ba230d 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4
-+++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4
 @@ -9,6 +9,9 @@ DAT_FILE_NAME = RT$(MODULE_DAT)STA.dat
  endif
  #endif // CONFIG_STA_SUPPORT //
@@ -217,10 +831,10 @@ index 2db303c..8ba230d 100644
  
  # Declare the contents of the .PHONY variable as phony.  We keep that
  # information in a variable so we can use it in if_changed and friends.
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.netif Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.netif
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.netif Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.netif
 index c8cc93c..c35e5cc 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.netif
-+++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.netif
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.netif
 @@ -8,6 +8,10 @@ endif
  #endif // CONFIG_STA_SUPPORT //
  
@@ -246,10 +860,10 @@ index c8cc93c..c35e5cc 100644
  
  # Declare the contents of the .PHONY variable as phony.  We keep that
  # # information in a variable so we can use it in if_changed and friends.
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.util Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.util
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.util Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.util
 index 69e401c..77904e0 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.util
-+++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.util
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.4.util
 @@ -7,6 +7,9 @@ MOD_NAME = rtutil$(MODULE)sta
  endif
  #endif // CONFIG_STA_SUPPORT //
@@ -274,10 +888,10 @@ index 69e401c..77904e0 100644
  
  # Declare the contents of the .PHONY variable as phony.  We keep that
  # # information in a variable so we can use it in if_changed and friends.
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6 Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6 Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6
 index 28c5530..1f1bf71 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6
-+++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6
 @@ -9,6 +9,9 @@ DAT_FILE_NAME = RT$(CHIPSET_DAT)STA.dat
  endif
  #endif // CONFIG_STA_SUPPORT //
@@ -309,10 +923,10 @@ index 28c5530..1f1bf71 100644
  
  # Declare the contents of the .PHONY variable as phony.  We keep that
  # information in a variable so we can use it in if_changed and friends.
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.netif Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.netif
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.netif Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.netif
 index 968165d..1a92a39 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.netif
-+++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.netif
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.netif
 @@ -7,6 +7,9 @@ MOD_NAME = rtnet$(MODULE)sta
  endif
  #endif // CONFIG_STA_SUPPORT //
@@ -334,10 +948,10 @@ index 968165d..1a92a39 100644
  	rm -rf $(addprefix $(LINUX_SRC_MODULE),$(addsuffix .ko,$(MOD_NAME)))
 -	/sbin/depmod -a ${shell uname -r}
 +	/sbin/depmod -a ${KERN_VER}
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.util Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.util
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.util Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.util
 index 7510db6..e43fe5f 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.util
-+++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.util
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/Makefile.6.util
 @@ -7,6 +7,9 @@ MOD_NAME = rtutil$(MODULE)sta
  endif
  #endif // CONFIG_STA_SUPPORT //
@@ -360,10 +974,10 @@ index 7510db6..e43fe5f 100644
 -	/sbin/depmod -a ${shell uname -r}
 \ No newline at end of file
 +	/sbin/depmod -a ${KERN_VER}
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/pci_main_dev.c Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/pci_main_dev.c
-index ebd3e57..e6cfac2 100644
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/pci_main_dev.c Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/pci_main_dev.c
+index ebd3e57..15b75bb 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/pci_main_dev.c
-+++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/pci_main_dev.c
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/pci_main_dev.c
 @@ -32,6 +32,7 @@
  #include "rt_os_util.h"
  #include "rt_os_net.h"
@@ -372,12 +986,11 @@ index ebd3e57..e6cfac2 100644
  
  /* */
  /* Function declarations */
-@@ -39,8 +40,14 @@
+@@ -39,8 +40,13 @@
  /*extern int rt28xx_close(IN struct net_device *net_dev); */
  /*extern int rt28xx_open(struct net_device *net_dev); */
  
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,8,0)
-+static VOID rt2860_remove_one(struct pci_dev *pci_dev);
 +static INT rt2860_probe(struct pci_dev *pci_dev, const struct pci_device_id  *ent);
 +#else
  static VOID __devexit rt2860_remove_one(struct pci_dev *pci_dev);
@@ -387,7 +1000,7 @@ index ebd3e57..e6cfac2 100644
  static void __exit rt2860_cleanup_module(void);
  static int __init rt2860_init_module(void);
  
-@@ -59,7 +66,11 @@ static int rt2860_resume(struct pci_dev *pci_dev);
+@@ -59,7 +65,11 @@ static int rt2860_resume(struct pci_dev *pci_dev);
  /* */
  /* Ralink PCI device table, include all supported chipsets */
  /* */
@@ -399,7 +1012,7 @@ index ebd3e57..e6cfac2 100644
  {
  #ifdef RT5592
  	{PCI_DEVICE(NIC_PCI_VENDOR_ID, NIC5592_PCIe_DEVICE_ID)},
-@@ -70,6 +81,7 @@ static struct pci_device_id rt2860_pci_tbl[] __devinitdata =
+@@ -70,6 +80,7 @@ static struct pci_device_id rt2860_pci_tbl[] __devinitdata =
      {0,}		/* terminate list */
  };
  
@@ -407,7 +1020,7 @@ index ebd3e57..e6cfac2 100644
  MODULE_DEVICE_TABLE(pci, rt2860_pci_tbl);
  #ifdef CONFIG_STA_SUPPORT
  #ifdef MODULE_VERSION
-@@ -86,11 +98,13 @@ static struct pci_driver rt2860_driver =
+@@ -86,11 +97,13 @@ static struct pci_driver rt2860_driver =
      name:       RTMP_DRV_NAME,
      id_table:   rt2860_pci_tbl,
      probe:      rt2860_probe,
@@ -421,7 +1034,7 @@ index ebd3e57..e6cfac2 100644
  
  #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,0)
  #ifdef CONFIG_PM
-@@ -291,7 +305,11 @@ module_exit(rt2860_cleanup_module);
+@@ -291,14 +304,18 @@ module_exit(rt2860_cleanup_module);
  /* */
  /* PCI device probe & initialization function */
  /* */
@@ -433,23 +1046,36 @@ index ebd3e57..e6cfac2 100644
      IN  struct pci_dev              *pci_dev, 
      IN  const struct pci_device_id  *pci_id)
  {
-@@ -461,8 +479,11 @@ err_out:
+ 	VOID 				*pAd = NULL;
+ 	struct  net_device	*net_dev;
+ 	PVOID				handle;
+-	PSTRING				print_name;
++	const char*				print_name;
+ 	ULONG				csr_addr;
+ 	INT rv = 0;
+ 	RTMP_OS_NETDEV_OP_HOOK	netDevHook;
+@@ -461,7 +478,7 @@ err_out:
  	return -ENODEV; /* probe fail */
  }
  
 -
-+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,8,0)
-+static VOID rt2860_remove_one(
-+#else
++#if LINUX_VERSION_CODE < KERNEL_VERSION(3,8,0)
  static VOID __devexit rt2860_remove_one(
-+#endif
      IN  struct pci_dev  *pci_dev)
  {
- 	PNET_DEV	net_dev = pci_get_drvdata(pci_dev);
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_linux.c Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_linux.c
-index e7c8084..dc0037d 100644
+@@ -506,7 +523,5 @@ static VOID __devexit rt2860_remove_one(
+ 	/* Free the root net_device */
+ 	RtmpOSNetDevFree(net_dev);
+ }
+- 
+-
+-
++#endif
+ 
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_linux.c Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_linux.c
+index e7c8084..ef77efb 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_linux.c
-+++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_linux.c
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_linux.c
 @@ -119,9 +119,11 @@ static inline VOID __RTMP_OS_Init_Timer(
  	IN PVOID data)
  {
@@ -505,21 +1131,130 @@ index e7c8084..dc0037d 100644
 -		DBGPRINT(RT_DEBUG_ERROR, ("no file read method\n"));
 -		return -1;
 -	}
-+	return kernel_read(osfd, &osfd->f_pos, pDataPtr, readLen);
++	return kernel_read(osfd, pDataPtr, readLen, &osfd->f_pos);
  }
  
  int RtmpOSFileWrite(RTMP_OS_FD osfd,
-@@ -1134,9 +1132,7 @@ static inline void __RtmpOSFSInfoChange(OS_FS_INFO * pOSFSInfo,
+@@ -1133,10 +1131,7 @@ static inline void __RtmpOSFSInfoChange(OS_FS_INFO * pOSFSInfo,
+ 		pOSFSInfo->fsuid = current_fsuid();
  		pOSFSInfo->fsgid = current_fsgid();
  #endif
- 		pOSFSInfo->fs = get_fs();
+-		pOSFSInfo->fs = get_fs();
 -		set_fs(KERNEL_DS);
  	} else {
 -		set_fs(pOSFSInfo->fs);
  #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,29)
  		current->fsuid = pOSFSInfo->fsuid;
  		current->fsgid = pOSFSInfo->fsgid;
-@@ -3594,7 +3590,7 @@ VOID RTMP_OS_Init_Timer(IN VOID *pReserved,
+@@ -1904,105 +1899,14 @@ VOID RtmpDrvAllMacPrint(IN VOID *pReserved,
+ 			IN UINT32 AddrStart,
+ 			IN UINT32 AddrEnd,
+ 			IN UINT32 AddrStep) {
+-	struct file *file_w;
+-	PSTRING fileName = "MacDump.txt";
+-	mm_segment_t orig_fs;
+-	STRING *msg;//[1024];
+-	ULONG macAddr = 0;
+-	UINT32 macValue = 0;
+-
+-	os_alloc_mem(NULL, (UCHAR **)&msg, 1024);
+-
+-	if (msg)
+-	{
+-		orig_fs = get_fs();
+-		set_fs(KERNEL_DS);
+-
+-		/* open file */
+-		file_w = filp_open(fileName, O_WRONLY | O_CREAT, 0);
+-		if (IS_ERR(file_w)) {
+-			DBGPRINT(RT_DEBUG_TRACE,
+-				 ("-->2) %s: Error %ld opening %s\n", __FUNCTION__,
+-				  -PTR_ERR(file_w), fileName));
+-		} else {
+-			if (file_w->f_op && file_w->f_op->write) {
+-				file_w->f_pos = 0;
+-				macAddr = AddrStart;
+-
+-				while (macAddr <= AddrEnd) {
+-	/*				RTMP_IO_READ32(pAd, macAddr, &macValue); // sample */
+-					macValue = *pBufMac++;
+-					sprintf(msg, "%08lx = %08X\n", macAddr,
+-						macValue);
+-
+-					/* write data to file */
+-					file_w->f_op->write(file_w, msg, strlen(msg),
+-							    &file_w->f_pos);
+-
+-					printk("%s", msg);
+-					macAddr += AddrStep;
+-				}
+-				sprintf(msg, "\nDump all MAC values to %s\n", fileName);
+-			}
+-			filp_close(file_w, NULL);
+-		}
+-		set_fs(orig_fs);
+-		os_free_mem(NULL, msg);
+-	}
++   ;
+ }
+ 
+ VOID RtmpDrvAllE2PPrint(IN VOID *pReserved,
+ 			IN USHORT *pMacContent,
+ 			IN UINT32 AddrEnd,
+ 			IN UINT32 AddrStep) {
+-	struct file *file_w;
+-	PSTRING fileName = "EEPROMDump.txt";
+-	mm_segment_t orig_fs;
+-	STRING *msg;//[1024];
+-	USHORT eepAddr = 0;
+-	USHORT eepValue;
+-
+-	os_alloc_mem(NULL, (UCHAR **)&msg, 1024);
+-
+-	if (msg)
+-	{
+-		orig_fs = get_fs();
+-		set_fs(KERNEL_DS);
+-		
+-		/* open file */
+-		file_w = filp_open(fileName, O_WRONLY | O_CREAT, 0);
+-		if (IS_ERR(file_w)) {
+-			DBGPRINT(RT_DEBUG_TRACE,
+-				 ("-->2) %s: Error %ld opening %s\n", __FUNCTION__,
+-				  -PTR_ERR(file_w), fileName));
+-		} else {
+-			if (file_w->f_op && file_w->f_op->write) {
+-				file_w->f_pos = 0;
+-				eepAddr = 0x00;
+-
+-	/*			while (eepAddr <= 0xFE) */
+-				while (eepAddr <= AddrEnd) {
+-	/*				RT28xx_EEPROM_READ16(pAd, eepAddr, eepValue); // sample */
+-					eepValue = *pMacContent;
+-					sprintf(msg, "%08x = %04x\n", eepAddr,
+-						eepValue);
+-
+-					/* write data to file */
+-					file_w->f_op->write(file_w, msg, strlen(msg),
+-							    &file_w->f_pos);
+-
+-					printk("%s", msg);
+-					eepAddr += AddrStep;
+-					pMacContent += (AddrStep >> 1);
+-				}
+-				sprintf(msg, "\nDump all EEPROM values to %s\n",
+-					fileName);
+-			}
+-			filp_close(file_w, NULL);
+-		}
+-		set_fs(orig_fs);
+-		os_free_mem(NULL, msg);
+-	}
++   ;
+ }
+ 
+ /*
+@@ -3594,7 +3498,7 @@ VOID RTMP_OS_Init_Timer(IN VOID *pReserved,
  	OS_NDIS_MINIPORT_TIMER *pTimer;
  
  	if (RTMP_OS_Alloc_RscOnly(pTimerOrg,
@@ -528,7 +1263,7 @@ index e7c8084..dc0037d 100644
  		return;		/* allocate fail */
  	}
  
-@@ -4933,7 +4929,7 @@ Note:
+@@ -4933,7 +4837,7 @@ Note:
  */
  VOID RtmpOsPktTailAdjust(IN PNDIS_PACKET pNetPkt,
  			 IN UINT removedTagLen) {
@@ -537,10 +1272,10 @@ index e7c8084..dc0037d 100644
  }
  
  /*
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_main_dev.c Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_main_dev.c
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_main_dev.c Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_main_dev.c
 index f1ebc38..5524ef2 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_main_dev.c
-+++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_main_dev.c
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_main_dev.c
 @@ -486,7 +486,7 @@ VOID *RtmpNetEthConvertDevSearch(
  	struct net *net;
  	net = dev_net(net_dev);
@@ -550,10 +1285,36 @@ index f1ebc38..5524ef2 100644
  	for_each_netdev(net, pNetDev)
  #else
  	struct net *net;
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/sta_ioctl.c Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/sta_ioctl.c
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_profile.c Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_profile.c
+index fab19a8..2f62257 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_profile.c
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_profile.c
+@@ -408,7 +408,7 @@ void STA_MonPktSend(
+ 
+     if (pRxBlk->DataSize + sizeof(wlan_ng_prism2_header) > RX_BUFFER_AGGRESIZE)
+     {
+-        DBGPRINT(RT_DEBUG_ERROR, ("%s : Size is too large! (%d)\n", __FUNCTION__, pRxBlk->DataSize + sizeof(wlan_ng_prism2_header)));
++        DBGPRINT(RT_DEBUG_ERROR, ("%s : Size is too large! (%u)\n", __FUNCTION__, (unsigned int)(pRxBlk->DataSize + sizeof(wlan_ng_prism2_header))));
+ 		goto err_free_sk_buff;
+     }
+ 
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_rbus_pci_drv.c Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_rbus_pci_drv.c
+index 2b8e79b..871c840 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_rbus_pci_drv.c
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/rt_rbus_pci_drv.c
+@@ -1379,7 +1379,7 @@ VOID RTMPInitPCIeDevice(
+ #endif /* RT5592 */
+ 		 0)
+ 	{
+-		UINT32 MacCsr0 = 0, Index= 0;
++		UINT32 MacCsr0 = 0;
+ 		WaitForAsicReady(pAd);
+ 		RTMP_IO_READ32(pAd, MAC_CSR0, &MacCsr0);
+ 
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/sta_ioctl.c Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/sta_ioctl.c
 index df434f9..2a151ed 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/sta_ioctl.c
-+++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/sta_ioctl.c
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/os/linux/sta_ioctl.c
 @@ -268,8 +268,9 @@ int rt_ioctl_giwmode(struct net_device *dev,
  /*    if(!RTMP_TEST_FLAG(pAd, fRTMP_ADAPTER_INTERRUPT_IN_USE)) */
  	if (RTMP_DRIVER_IOCTL_SANITY_CHECK(pAd, NULL) != NDIS_STATUS_SUCCESS)
@@ -603,11 +1364,58 @@ index df434f9..2a151ed 100644
  					break;
  			return rt_ioctl_setparam(net_dev, NULL, NULL, wrqin->u.data.pointer);
  			break;
-diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/sta/sta_cfg.c Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/sta/sta_cfg.c
-index 6e66010..67bd0ba 100644
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/sta/rtmp_data.c Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/sta/rtmp_data.c
+index f0f3607..7bde0a3 100644
+--- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/sta/rtmp_data.c
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/sta/rtmp_data.c
+@@ -279,8 +279,6 @@ VOID STAHandleRxDataFrame(
+ 	MAC_TABLE_ENTRY *pEntry = NULL;
+ 	UCHAR FromWhichBSSID = BSS0;
+ 	UCHAR UserPriority = 0;
+-	UCHAR OldPwrMgmt = PWR_ACTIVE;
+-	FRAME_CONTROL *pFmeCtrl = &pHeader->FC;
+ 
+ 	if ((pHeader->FC.FrDs == 1) && (pHeader->FC.ToDs == 1)) {
+ #ifdef CLIENT_WDS
+diff --git Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/sta/sta_cfg.c Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/sta/sta_cfg.c
+index 6e66010..5bc2591 100644
 --- Linux/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/sta/sta_cfg.c
-+++ Linux_5.4.33/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/sta/sta_cfg.c
-@@ -4893,7 +4893,7 @@ VOID RTMPIoctlShow(
++++ Linux_master/DPO_GPL_RT5592STA_LinuxSTA_v2.6.0.0_20120326/sta/sta_cfg.c
+@@ -680,7 +680,9 @@ INT Set_EncrypType_Proc(
+ 	    pAd->StaCfg.GroupCipher   = Ndis802_11Encryption3Enabled;
+     }
+     else
++    {
+         return FALSE;
++    }
+ 
+ 	if (pAd->StaCfg.BssType == BSS_ADHOC)
+ 	{
+@@ -1341,10 +1343,10 @@ INT Set_XlinkMode_Proc(
+ {
+ 	UINT32 Value = 0;
+ 
+-    if (simple_strtol(arg, 0, 10) == 0)
+-        pAd->StaCfg.PSPXlink = 0;
+-    else
+-        pAd->StaCfg.PSPXlink = 1;
++	if (simple_strtol(arg, 0, 10) == 0)
++		pAd->StaCfg.PSPXlink = 0;
++	else
++		pAd->StaCfg.PSPXlink = 1;
+ 
+ 	if (pAd->StaCfg.PSPXlink)
+ 		Value = PSPXLINK;
+@@ -3950,7 +3952,7 @@ INT RTMPQueryInformation(
+ 		case OID_802_11_CURRENTCHANNEL:
+ 			DBGPRINT(RT_DEBUG_TRACE, ("Query::OID_802_11_CURRENTCHANNEL \n"));
+ 			wrq->u.data.length = sizeof(UCHAR);
+-			DBGPRINT(RT_DEBUG_TRACE, ("sizeof UCHAR=%d, channel=%d \n", sizeof(UCHAR), pAd->CommonCfg.Channel));
++			DBGPRINT(RT_DEBUG_TRACE, ("sizeof UCHAR=%d, channel=%d \n", (int)sizeof(UCHAR), pAd->CommonCfg.Channel));
+ 			Status = copy_to_user(wrq->u.data.pointer, &pAd->CommonCfg.Channel, wrq->u.data.length);
+ 			DBGPRINT(RT_DEBUG_TRACE, ("Status=%d\n", Status));
+ 			break;
+@@ -4893,7 +4895,7 @@ VOID RTMPIoctlShow(
              wrq->u.data.length = strlen(extra) + 1; /* 1: size of '\0' */
              break;
          case SHOW_DRVIER_VERION:
@@ -616,7 +1424,25 @@ index 6e66010..67bd0ba 100644
              wrq->u.data.length = strlen(extra) + 1; /* 1: size of '\0' */
              break;
  #ifdef DOT11_N_SUPPORT
-@@ -7350,7 +7350,7 @@ INT RTMP_STA_IoctlHandle(
+@@ -5129,7 +5131,7 @@ RtmpIoctl_rt_ioctl_siwfreq(
+     else
+         return NDIS_STATUS_FAILURE;
+ 
+-	return NDIS_STATUS_SUCCESS;
++    return NDIS_STATUS_SUCCESS;
+ }
+ 
+ 
+@@ -6957,7 +6959,7 @@ RtmpIoctl_rt_ioctl_giwrate(
+     if (rate_index >= rate_count)
+         rate_index = rate_count-1;
+ 
+-	*(ULONG *)pData = ralinkrate[rate_index] * 500000;
++    *(ULONG *)pData = ralinkrate[rate_index] * 500000;
+ 
+ 	return NDIS_STATUS_SUCCESS;
+ }
+@@ -7350,7 +7352,7 @@ INT RTMP_STA_IoctlHandle(
  
  		case CMD_RTPRIV_IOCTL_STA_SCAN_END:
  		    pAd->StaCfg.bSkipAutoScanConn = FALSE;
